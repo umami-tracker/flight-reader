@@ -20,9 +20,9 @@
         </header>
 
         <label class="import-box">
-          <input id="fileInput" type="file" accept=".txt,.md,.html,.htm,text/plain,text/html,text/markdown" multiple />
+          <input id="fileInput" type="file" accept=".txt,.md,.html,.htm,.json,text/plain,text/html,text/markdown,application/json" multiple />
           <span>Import files</span>
-          <small>TXT, Markdown, HTML from sources you are allowed to read</small>
+          <small>TXT, Markdown, HTML, or Flight Reader backup</small>
         </label>
 
         <label class="backup-box">
@@ -64,6 +64,8 @@
             <h2 id="bookTitle">Import a legal novel file</h2>
           </div>
           <div class="reader-actions">
+            <button id="bookmarkButton" type="button" title="Save current reading spot" disabled>Bookmark</button>
+            <button id="jumpBookmarkButton" type="button" title="Go to saved bookmark" disabled>Go mark</button>
             <button id="exportButton" type="button" title="Export current book backup" disabled>Export backup</button>
             <button id="decreaseFont" type="button" title="Smaller text">A-</button>
             <button id="increaseFont" type="button" title="Larger text">A+</button>
@@ -73,6 +75,11 @@
 
         <div class="progress-wrap" aria-label="Reading progress">
           <div id="progressBar" class="progress-bar"></div>
+        </div>
+
+        <div id="readerMeta" class="reader-meta">
+          <span id="progressText">0% read</span>
+          <span id="bookmarkText">No bookmark</span>
         </div>
 
         <div id="chapterControls" class="chapter-controls hidden">
