@@ -2,6 +2,7 @@ const storageKey = "flight-reader-v1";
 const settingsKey = "flight-reader-settings-v1";
 
 const fileInput = document.querySelector("#fileInput");
+const backupInput = document.querySelector("#backupInput");
 const urlForm = document.querySelector("#urlForm");
 const urlInput = document.querySelector("#urlInput");
 const urlStatus = document.querySelector("#urlStatus");
@@ -24,6 +25,7 @@ const nextChapter = document.querySelector("#nextChapter");
 const themeButton = document.querySelector("#themeButton");
 const decreaseFont = document.querySelector("#decreaseFont");
 const increaseFont = document.querySelector("#increaseFont");
+const exportButton = document.querySelector("#exportButton");
 const installButton = document.querySelector("#installButton");
 
 let books = loadBooks().map(normalizeBook);
@@ -72,6 +74,25 @@ fileInput.addEventListener("change", async (event) => {
   renderLibrary();
   openBook(activeId);
   fileInput.value = "";
+});
+
+backupInput.addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    const backup = JSON.parse(await file.text());
+    const importedBook = normalizeBackup(backup);
+    books.unshift(importedBook);
+    activeId = importedBook.id;
+    persist();
+    renderLibrary();
+    openBook(activeId);
+  } catch (error) {
+    alert(error.message || "Could not import that backup.");
+  } finally {
+    backupInput.value = "";
+  }
 });
 
 urlForm.addEventListener("submit", async (event) => {
@@ -188,6 +209,12 @@ increaseFont.addEventListener("click", () => {
   persist(false);
 });
 
+exportButton.addEventListener("click", () => {
+  const book = activeBook();
+  if (!book) return;
+  exportBookBackup(book);
+});
+
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   deferredInstall = event;
@@ -244,6 +271,7 @@ function openBook(id) {
     bookTitle.textContent = "Import a legal novel file";
     metaLine.textContent = "Ready for takeoff";
     chapterControls.classList.add("hidden");
+    exportButton.disabled = true;
     content.innerHTML = `
       <p>Import legally obtained novel files before boarding, then read without an internet connection.</p>
       <p>Good sources include ebook store exports, your own writing, public domain books, or files the author allows you to download.</p>
@@ -257,6 +285,7 @@ function openBook(id) {
   const chapter = currentChapter(book);
   bookTitle.textContent = book.title;
   metaLine.textContent = chapter ? `${chapter.title} - Offline mode` : "Offline mode";
+  exportButton.disabled = false;
   content.innerHTML = renderChapter(chapter || book);
   requestAnimationFrame(() => {
     const scrollable = content.scrollHeight - content.clientHeight;
@@ -476,6 +505,51 @@ function removeReaderClutter(template) {
 
     if (clutterPattern.test(hints)) node.remove();
   });
+}
+
+function exportBookBackup(book) {
+  const backup = {
+    app: "flight-reader",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    book: normalizeBook(book)
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {
+    type: "application/json;charset=utf-8"
+  });
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = `${safeFileName(book.title || "flight-reader-book")}.flight-reader.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(blobUrl);
+}
+
+function normalizeBackup(backup) {
+  if (!backup || backup.app !== "flight-reader") {
+    throw new Error("This is not a Flight Reader backup.");
+  }
+
+  const book = normalizeBook(backup.book);
+  if (!book.title || !book.chapters.length) {
+    throw new Error("Backup does not contain a readable book.");
+  }
+
+  return {
+    ...book,
+    id: crypto.randomUUID(),
+    addedAt: Date.now()
+  };
+}
+
+function safeFileName(value) {
+  return value
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "-")
+    .replace(/\s+/g, " ")
+    .slice(0, 80) || "flight-reader-book";
 }
 
 function loadBooks() {

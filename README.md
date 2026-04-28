@@ -10,6 +10,7 @@ Offline-first novel reader for loading legal TXT, Markdown, HTML, pasted chapter
 - Auto-split chapter markers like `Chapter 12`, `Episode 12`, and Thai chapter markers
 - Previous/next chapter controls
 - Per-chapter reading progress
+- Export and import `.flight-reader.json` backups between devices
 - Day/night reading mode
 - Font size controls
 - Reader cleanup for common ad, banner, sidebar, social, and sponsored HTML clutter
@@ -25,3 +26,5 @@ Offline-first novel reader for loading legal TXT, Markdown, HTML, pasted chapter
 ## Mobile Note
 
 Open the GitHub Pages URL once before flying and import or paste your chapters while online. Browser storage is local to the phone browser.
+
+To move a saved book from computer to phone, open the book, press `Export backup`, send the `.flight-reader.json` file to your phone, then use `Import backup` in the phone browser.

@@ -25,6 +25,12 @@
           <small>TXT, Markdown, HTML from sources you are allowed to read</small>
         </label>
 
+        <label class="backup-box">
+          <input id="backupInput" type="file" accept=".json,application/json" />
+          <span>Import backup</span>
+          <small>Load a .flight-reader.json backup from another device</small>
+        </label>
+
         <form id="urlForm" class="url-import">
           <input id="urlInput" type="url" placeholder="https://example.com/book.txt" autocomplete="off" />
           <button id="urlButton" type="submit">Import URL</button>
@@ -56,6 +62,7 @@
             <h2 id="bookTitle">Import a legal novel file</h2>
           </div>
           <div class="reader-actions">
+            <button id="exportButton" type="button" title="Export current book backup" disabled>Export backup</button>
             <button id="decreaseFont" type="button" title="Smaller text">A-</button>
             <button id="increaseFont" type="button" title="Larger text">A+</button>
             <button id="themeButton" type="button" title="Toggle theme">Night</button>

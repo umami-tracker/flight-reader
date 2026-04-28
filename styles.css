@@ -132,7 +132,8 @@ h2 {
   line-height: 1;
 }
 
-.import-box {
+.import-box,
+.backup-box {
   display: grid;
   gap: 5px;
   border: 1px dashed var(--accent);
@@ -142,17 +143,24 @@ h2 {
   cursor: pointer;
 }
 
-.import-box input {
+.backup-box {
+  border-style: solid;
+}
+
+.import-box input,
+.backup-box input {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
 
-.import-box span {
+.import-box span,
+.backup-box span {
   font-weight: 800;
 }
 
 .import-box small,
+.backup-box small,
 .book-progress,
 .empty {
   color: var(--muted);
