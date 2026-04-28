@@ -26,6 +26,7 @@ const themeButton = document.querySelector("#themeButton");
 const decreaseFont = document.querySelector("#decreaseFont");
 const increaseFont = document.querySelector("#increaseFont");
 const exportButton = document.querySelector("#exportButton");
+const exportSidebarButton = document.querySelector("#exportSidebarButton");
 const installButton = document.querySelector("#installButton");
 
 let books = loadBooks().map(normalizeBook);
@@ -210,10 +211,18 @@ increaseFont.addEventListener("click", () => {
 });
 
 exportButton.addEventListener("click", () => {
+  exportActiveBook();
+});
+
+exportSidebarButton.addEventListener("click", () => {
+  exportActiveBook();
+});
+
+function exportActiveBook() {
   const book = activeBook();
   if (!book) return;
   exportBookBackup(book);
-});
+}
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
@@ -272,6 +281,7 @@ function openBook(id) {
     metaLine.textContent = "Ready for takeoff";
     chapterControls.classList.add("hidden");
     exportButton.disabled = true;
+    exportSidebarButton.disabled = true;
     content.innerHTML = `
       <p>Import legally obtained novel files before boarding, then read without an internet connection.</p>
       <p>Good sources include ebook store exports, your own writing, public domain books, or files the author allows you to download.</p>
@@ -286,6 +296,7 @@ function openBook(id) {
   bookTitle.textContent = book.title;
   metaLine.textContent = chapter ? `${chapter.title} - Offline mode` : "Offline mode";
   exportButton.disabled = false;
+  exportSidebarButton.disabled = false;
   content.innerHTML = renderChapter(chapter || book);
   requestAnimationFrame(() => {
     const scrollable = content.scrollHeight - content.clientHeight;
