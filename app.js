@@ -28,6 +28,7 @@ const nextChapter = document.querySelector("#nextChapter");
 const themeButton = document.querySelector("#themeButton");
 const decreaseFont = document.querySelector("#decreaseFont");
 const increaseFont = document.querySelector("#increaseFont");
+const shelfButton = document.querySelector("#shelfButton");
 const bookmarkButton = document.querySelector("#bookmarkButton");
 const jumpBookmarkButton = document.querySelector("#jumpBookmarkButton");
 const exportButton = document.querySelector("#exportButton");
@@ -174,6 +175,10 @@ pasteForm.addEventListener("submit", (event) => {
 
 searchInput.addEventListener("input", renderLibrary);
 
+shelfButton.addEventListener("click", () => {
+  document.body.classList.toggle("show-library");
+});
+
 chapterSelect.addEventListener("change", () => {
   openChapter(Number(chapterSelect.value));
 });
@@ -309,6 +314,7 @@ function openBook(id) {
   settings.activeId = activeId;
 
   if (!book) {
+    document.body.classList.remove("reading-active", "show-library");
     bookTitle.textContent = "Import a legal novel file";
     metaLine.textContent = "Ready for takeoff";
     chapterControls.classList.add("hidden");
@@ -327,6 +333,8 @@ function openBook(id) {
     return;
   }
 
+  document.body.classList.add("reading-active");
+  document.body.classList.remove("show-library");
   renderChapterControls(book);
   const chapter = currentChapter(book);
   bookTitle.textContent = book.title;
@@ -347,6 +355,7 @@ function openBook(id) {
 
 function focusReaderOnSmallScreen() {
   if (window.matchMedia("(max-width: 560px)").matches) {
+    document.body.classList.remove("show-library");
     reader.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }

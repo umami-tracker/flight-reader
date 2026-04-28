@@ -133,6 +133,10 @@ h2 {
   display: none;
 }
 
+.mobile-only {
+  display: none;
+}
+
 .icon-button {
   width: 42px;
   padding: 0;
@@ -443,9 +447,22 @@ h2 {
 
   .library {
     flex: 0 0 auto;
-    max-height: 30dvh;
+    max-height: 28dvh;
     padding: 10px 12px;
     gap: 8px;
+  }
+
+  body.reading-active:not(.show-library) .library {
+    display: none;
+  }
+
+  body.show-library .library {
+    display: flex;
+    max-height: 42dvh;
+  }
+
+  .mobile-only {
+    display: inline-flex;
   }
 
   .brand {
@@ -530,14 +547,20 @@ h2 {
   .reader {
     flex: 1 1 auto;
     min-height: 0;
-    padding: 10px 12px 12px;
+    height: 100dvh;
+    padding: 8px 10px 10px;
     gap: 8px;
     grid-template-rows: auto auto auto auto minmax(0, 1fr);
     overflow: hidden;
   }
 
+  body.show-library .reader {
+    height: 58dvh;
+  }
+
   .reader-top {
     gap: 8px;
+    align-items: stretch;
   }
 
   .reader-top .eyebrow {
@@ -560,6 +583,10 @@ h2 {
     min-width: max-content;
     padding: 0 10px;
     font-size: 14px;
+  }
+
+  #exportButton {
+    display: none;
   }
 
   .progress-wrap {
@@ -590,11 +617,14 @@ h2 {
     max-height: none;
     min-height: 0;
     height: 100%;
-    padding: 20px 18px 28px;
+    padding: 18px 16px 44px;
     border-radius: 8px;
-    font-size: var(--reader-size);
+    font-size: max(var(--reader-size), 20px);
     line-height: 1.9;
     box-shadow: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
 
   .content p {
