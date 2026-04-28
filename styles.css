@@ -32,6 +32,7 @@ body.dark {
 html,
 body {
   height: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -357,6 +358,7 @@ h2 {
 
 .content {
   width: min(920px, 100%);
+  min-width: 0;
   justify-self: center;
   overflow: auto;
   background:
@@ -370,7 +372,17 @@ h2 {
   font-size: var(--reader-size);
   line-height: 1.95;
   letter-spacing: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-break: anywhere;
+  white-space: normal;
   scrollbar-gutter: stable;
+}
+
+.content * {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .content p {
@@ -384,6 +396,19 @@ h2 {
     overflow: auto;
   }
 
+  body.reading-active:not(.show-library) .library {
+    display: none;
+  }
+
+  body.show-library .library {
+    display: flex;
+    max-height: 42dvh;
+  }
+
+  .mobile-only {
+    display: inline-flex;
+  }
+
   .library {
     border-right: 0;
     border-bottom: 1px solid var(--line);
@@ -394,9 +419,13 @@ h2 {
 
   .reader {
     height: auto;
-    min-height: 65dvh;
+    min-height: 100dvh;
     padding: 18px;
-    overflow: visible;
+    overflow: hidden;
+  }
+
+  body.show-library .reader {
+    min-height: 58dvh;
   }
 
   .reader-top {
@@ -407,17 +436,25 @@ h2 {
   .reader-actions {
     width: 100%;
     justify-content: stretch;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
   }
 
   .reader-actions button {
+    flex: 0 0 auto;
     min-width: 0;
     padding: 0 8px;
   }
 
+  #exportButton {
+    display: none;
+  }
+
   .content {
-    max-height: 58dvh;
+    max-height: none;
+    height: 100%;
     padding: 24px;
     font-size: calc(var(--reader-size) - 1px);
   }
@@ -443,6 +480,8 @@ h2 {
     flex-direction: column;
     height: 100dvh;
     overflow: hidden;
+    width: 100vw;
+    max-width: 100vw;
   }
 
   .library {
@@ -552,6 +591,8 @@ h2 {
     gap: 8px;
     grid-template-rows: auto auto auto auto minmax(0, 1fr);
     overflow: hidden;
+    width: 100vw;
+    max-width: 100vw;
   }
 
   body.show-library .reader {
@@ -576,6 +617,7 @@ h2 {
     padding-bottom: 2px;
     justify-content: flex-start;
     width: 100%;
+    max-width: 100%;
   }
 
   .reader-actions button {
@@ -599,8 +641,10 @@ h2 {
   }
 
   .chapter-controls {
-    grid-template-columns: 52px minmax(0, 1fr) 52px;
+    grid-template-columns: 50px minmax(0, 1fr) 50px;
     gap: 6px;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .chapter-controls button {
@@ -614,10 +658,11 @@ h2 {
 
   .content {
     width: 100%;
+    max-width: 100%;
     max-height: none;
     min-height: 0;
     height: 100%;
-    padding: 18px 16px 44px;
+    padding: 18px 14px 44px;
     border-radius: 8px;
     font-size: max(var(--reader-size), 20px);
     line-height: 1.9;
