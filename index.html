@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111827" />
+    <title>Flight Novel Reader</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="library" aria-label="Library">
+        <header class="brand">
+          <div>
+            <p class="eyebrow">Offline Library</p>
+            <h1>Flight Reader</h1>
+          </div>
+          <button id="installButton" class="icon-button hidden" type="button" title="Install app">+</button>
+        </header>
+
+        <label class="import-box">
+          <input id="fileInput" type="file" accept=".txt,.md,.html,.htm,text/plain,text/html,text/markdown" multiple />
+          <span>Import files</span>
+          <small>TXT, Markdown, HTML from sources you are allowed to read</small>
+        </label>
+
+        <form id="urlForm" class="url-import">
+          <input id="urlInput" type="url" placeholder="https://example.com/book.txt" autocomplete="off" />
+          <button id="urlButton" type="submit">Import URL</button>
+          <small id="urlStatus">Legal text/HTML only. Reader cleanup removes common ad boxes.</small>
+        </form>
+
+        <details class="paste-panel">
+          <summary>Paste chapter</summary>
+          <form id="pasteForm">
+            <input id="pasteTitle" type="text" placeholder="Novel or chapter title" autocomplete="off" />
+            <textarea id="pasteText" rows="8" placeholder="Paste one or many chapters you are allowed to save offline"></textarea>
+            <button type="submit">Save to offline shelf</button>
+            <small id="pasteStatus">Tip: lines like Chapter 12 or Thai chapter markers will be split into separate chapters.</small>
+          </form>
+        </details>
+
+        <div class="toolbar">
+          <input id="searchInput" type="search" placeholder="Search title" />
+          <button id="clearButton" type="button" title="Remove all books">Clear</button>
+        </div>
+
+        <nav id="bookList" class="book-list"></nav>
+      </aside>
+
+      <main class="reader">
+        <div class="reader-top">
+          <div>
+            <p id="metaLine" class="eyebrow">Ready for takeoff</p>
+            <h2 id="bookTitle">Import a legal novel file</h2>
+          </div>
+          <div class="reader-actions">
+            <button id="decreaseFont" type="button" title="Smaller text">A-</button>
+            <button id="increaseFont" type="button" title="Larger text">A+</button>
+            <button id="themeButton" type="button" title="Toggle theme">Night</button>
+          </div>
+        </div>
+
+        <div class="progress-wrap" aria-label="Reading progress">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+
+        <div id="chapterControls" class="chapter-controls hidden">
+          <button id="prevChapter" type="button" title="Previous chapter">Prev</button>
+          <select id="chapterSelect" aria-label="Chapter"></select>
+          <button id="nextChapter" type="button" title="Next chapter">Next</button>
+        </div>
+
+        <article id="content" class="content">
+          <p>
+            Import legally obtained novel files before boarding, then read without an internet connection.
+            The app remembers your latest book, reading position, theme, and font size.
+          </p>
+        </article>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
