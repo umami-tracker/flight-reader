@@ -2,49 +2,52 @@
 <html lang="th">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#111827" />
-    <title>Flight Novel Reader</title>
+    <title>Flight Reader - Offline Novel Shelf</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="pirate-adventure-theme.css" />
   </head>
   <body>
     <div class="app">
       <aside class="library" aria-label="Library">
         <header class="brand">
           <div>
-            <p class="eyebrow">Offline Library</p>
+            <p class="eyebrow">Pack before boarding</p>
             <h1>Flight Reader</h1>
           </div>
           <button id="installButton" class="icon-button hidden" type="button" title="Install app">+</button>
         </header>
 
-        <label class="import-box">
-          <input id="fileInput" type="file" accept=".txt,.md,.html,.htm,.json,text/plain,text/html,text/markdown,application/json" multiple />
-          <span>Import files</span>
-          <small>TXT, Markdown, HTML, or Flight Reader backup</small>
-        </label>
+        <div class="import-grid">
+          <label class="import-box">
+            <input id="fileInput" type="file" accept=".txt,.md,.html,.htm,.json,text/plain,text/html,text/markdown,application/json" multiple />
+            <span>Import files</span>
+            <small>TXT, HTML, Markdown, backup JSON</small>
+          </label>
 
-        <label class="backup-box">
-          <input id="backupInput" type="file" accept=".json,application/json" />
-          <span>Import backup</span>
-          <small>Load a .flight-reader.json backup from another device</small>
-        </label>
+          <label class="backup-box">
+            <input id="backupInput" type="file" accept=".json,application/json" />
+            <span>Restore book backup</span>
+            <small>Open JSON from LINE, Files, Drive, or Downloads</small>
+          </label>
+        </div>
+
+        <button id="demoButton" class="wide-action demo-action" type="button">Load demo book</button>
 
         <form id="urlForm" class="url-import">
           <input id="urlInput" type="url" placeholder="https://example.com/book.txt" autocomplete="off" />
           <button id="urlButton" type="submit">Import URL</button>
-          <small id="urlStatus">Legal text/HTML only. Reader cleanup removes common ad boxes.</small>
+          <small id="urlStatus">Use public or legally saved pages only. Some sites block direct import.</small>
         </form>
 
         <details class="paste-panel">
-          <summary>Paste chapter</summary>
+          <summary>Paste chapters</summary>
           <form id="pasteForm">
-            <input id="pasteTitle" type="text" placeholder="Novel or chapter title" autocomplete="off" />
-            <textarea id="pasteText" rows="8" placeholder="Paste one or many chapters you are allowed to save offline"></textarea>
-            <button type="submit">Save to offline shelf</button>
-            <small id="pasteStatus">Tip: lines like Chapter 12 or Thai chapter markers will be split into separate chapters.</small>
+            <input id="pasteTitle" type="text" placeholder="Novel title" autocomplete="off" />
+            <textarea id="pasteText" rows="8" placeholder="Paste chapters with markers like Chapter 12 or Thai chapter markers"></textarea>
+            <button type="submit">Save to shelf</button>
+            <small id="pasteStatus">Multi-chapter paste will be split automatically.</small>
           </form>
         </details>
 
@@ -53,22 +56,22 @@
           <button id="clearButton" type="button" title="Remove all books">Clear</button>
         </div>
 
-        <nav id="bookList" class="book-list"></nav>
+        <nav id="bookList" class="book-list" aria-label="Books"></nav>
 
-        <button id="exportSidebarButton" class="wide-action" type="button" disabled>Export backup</button>
+        <button id="exportSidebarButton" class="wide-action" type="button" disabled>Save phone backup</button>
       </aside>
 
       <main class="reader">
         <div class="reader-top">
-          <div>
-            <p id="metaLine" class="eyebrow">Ready for takeoff</p>
-            <h2 id="bookTitle">Import a legal novel file</h2>
+          <div class="title-block">
+            <p id="metaLine" class="eyebrow">Your offline shelf is ready</p>
+            <h2 id="bookTitle">Import a novel file</h2>
           </div>
-          <div class="reader-actions">
+          <div class="reader-actions" aria-label="Reader actions">
             <button id="shelfButton" class="mobile-only" type="button" title="Show shelf">Shelf</button>
-            <button id="bookmarkButton" type="button" title="Save current reading spot" disabled>Bookmark</button>
+            <button id="bookmarkButton" type="button" title="Save current reading spot" disabled>Mark</button>
             <button id="jumpBookmarkButton" type="button" title="Go to saved bookmark" disabled>Go mark</button>
-            <button id="exportButton" type="button" title="Export current book backup" disabled>Export backup</button>
+            <button id="exportButton" type="button" title="Export current book backup" disabled>Save phone backup</button>
             <button id="decreaseFont" type="button" title="Smaller text">A-</button>
             <button id="increaseFont" type="button" title="Larger text">A+</button>
             <button id="themeButton" type="button" title="Toggle theme">Night</button>
@@ -92,8 +95,8 @@
 
         <article id="content" class="content">
           <p>
-            Import legally obtained novel files before boarding, then read without an internet connection.
-            The app remembers your latest book, reading position, theme, and font size.
+            Bring your own legally saved novel files, import them before boarding, and read with no internet.
+            Your books stay in this browser. Flight Reader remembers your chapter, progress, bookmark, theme, and font size on this device.
           </p>
         </article>
       </main>

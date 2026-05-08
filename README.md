@@ -1,30 +1,26 @@
 # Flight Reader
 
-Offline-first novel reader for loading legal TXT, Markdown, HTML, pasted chapters, or permitted public text pages before a flight.
+Flight Reader is a private offline novel shelf for flights: load your own legally saved TXT, Markdown, HTML, pasted chapters, or permitted public pages before you board.
 
 ## Features
 
-- Import local TXT, Markdown, and HTML files
-- Import legal public text or HTML URLs when CORS allows it
-- Paste one or many chapters
-- Auto-split chapter markers like `Chapter 12`, `Episode 12`, and Thai chapter markers
-- Previous/next chapter controls
-- Per-chapter reading progress
-- Export and import `.flight-reader.json` backups between devices
-- Day/night reading mode
-- Font size controls
-- Reader cleanup for common ad, banner, sidebar, social, and sponsored HTML clutter
+- Import TXT, Markdown, HTML, and `.flight-reader.json` backups
+- Paste one or many chapters and split chapter markers automatically
+- Previous/next chapter navigation
+- Per-chapter progress and one-tap bookmark
+- Export/import backup between computer and phone
+- Mobile reading mode that hides the shelf and prevents horizontal text overflow
+- Day/night mode and font size controls
+- Built-in demo book for testing import, bookmark, export, and mobile reading mode
 
-## GitHub Pages
+## Phone Workflow
 
-1. Upload these files to a public GitHub repo.
-2. Go to `Settings > Pages`.
-3. Choose `Deploy from a branch`.
-4. Select `main` and `/root`.
-5. Open the Pages URL on your phone.
+1. Open the app on the computer and import or paste chapters.
+2. Open the book and press `Save phone backup`.
+3. Send the `.flight-reader.json` file to the phone through LINE, Files, Drive, or Telegram.
+4. On the phone, open the GitHub Pages app and use `Restore book backup` or `Import files`.
+5. Test airplane mode before the flight.
 
-## Mobile Note
+Browser storage is local to each device, so backups are the transfer method.
 
-Open the GitHub Pages URL once before flying and import or paste your chapters while online. Browser storage is local to the phone browser.
-
-To move a saved book from computer to phone, open the book, press `Export backup`, send the `.flight-reader.json` file to your phone, then use `Import backup` in the phone browser.
+GitHub Pages only hosts the app files. Your imported books are stored in your own browser storage unless you choose to export or share a backup.

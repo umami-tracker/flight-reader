@@ -1,41 +1,44 @@
-const storageKey = "flight-reader-v1";
-const settingsKey = "flight-reader-settings-v1";
+const storageKey = "flight-reader-v2";
+const settingsKey = "flight-reader-settings-v2";
 
-const fileInput = document.querySelector("#fileInput");
-const backupInput = document.querySelector("#backupInput");
-const urlForm = document.querySelector("#urlForm");
-const urlInput = document.querySelector("#urlInput");
-const urlStatus = document.querySelector("#urlStatus");
-const urlButton = document.querySelector("#urlButton");
-const pasteForm = document.querySelector("#pasteForm");
-const pasteTitle = document.querySelector("#pasteTitle");
-const pasteText = document.querySelector("#pasteText");
-const pasteStatus = document.querySelector("#pasteStatus");
-const bookList = document.querySelector("#bookList");
-const searchInput = document.querySelector("#searchInput");
-const clearButton = document.querySelector("#clearButton");
-const content = document.querySelector("#content");
-const reader = document.querySelector(".reader");
-const bookTitle = document.querySelector("#bookTitle");
-const metaLine = document.querySelector("#metaLine");
-const progressBar = document.querySelector("#progressBar");
-const progressText = document.querySelector("#progressText");
-const bookmarkText = document.querySelector("#bookmarkText");
-const chapterControls = document.querySelector("#chapterControls");
-const chapterSelect = document.querySelector("#chapterSelect");
-const prevChapter = document.querySelector("#prevChapter");
-const nextChapter = document.querySelector("#nextChapter");
-const themeButton = document.querySelector("#themeButton");
-const decreaseFont = document.querySelector("#decreaseFont");
-const increaseFont = document.querySelector("#increaseFont");
-const shelfButton = document.querySelector("#shelfButton");
-const bookmarkButton = document.querySelector("#bookmarkButton");
-const jumpBookmarkButton = document.querySelector("#jumpBookmarkButton");
-const exportButton = document.querySelector("#exportButton");
-const exportSidebarButton = document.querySelector("#exportSidebarButton");
-const installButton = document.querySelector("#installButton");
+const $ = (selector) => document.querySelector(selector);
 
-let books = loadBooks().map(normalizeBook);
+const fileInput = $("#fileInput");
+const backupInput = $("#backupInput");
+const urlForm = $("#urlForm");
+const urlInput = $("#urlInput");
+const urlStatus = $("#urlStatus");
+const urlButton = $("#urlButton");
+const pasteForm = $("#pasteForm");
+const pasteTitle = $("#pasteTitle");
+const pasteText = $("#pasteText");
+const pasteStatus = $("#pasteStatus");
+const demoButton = $("#demoButton");
+const searchInput = $("#searchInput");
+const clearButton = $("#clearButton");
+const bookList = $("#bookList");
+const reader = $(".reader");
+const content = $("#content");
+const bookTitle = $("#bookTitle");
+const metaLine = $("#metaLine");
+const progressBar = $("#progressBar");
+const progressText = $("#progressText");
+const bookmarkText = $("#bookmarkText");
+const chapterControls = $("#chapterControls");
+const chapterSelect = $("#chapterSelect");
+const prevChapter = $("#prevChapter");
+const nextChapter = $("#nextChapter");
+const shelfButton = $("#shelfButton");
+const bookmarkButton = $("#bookmarkButton");
+const jumpBookmarkButton = $("#jumpBookmarkButton");
+const exportButton = $("#exportButton");
+const exportSidebarButton = $("#exportSidebarButton");
+const decreaseFont = $("#decreaseFont");
+const increaseFont = $("#increaseFont");
+const themeButton = $("#themeButton");
+const installButton = $("#installButton");
+
+let books = loadBooks().map(normalizeBook).filter((book) => book.chapters.length);
 let settings = loadSettings();
 let activeId = settings.activeId || books[0]?.id || null;
 let deferredInstall = null;
@@ -45,79 +48,18 @@ applySettings();
 renderLibrary();
 openBook(activeId);
 
-fileInput.addEventListener("change", async (event) => {
-  const files = [...event.target.files];
-  const chapters = [];
-  const importedBackups = [];
-  for (const file of files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))) {
-    if (isBackupFile(file)) {
-      try {
-        importedBackups.push(normalizeBackup(JSON.parse(await file.text())));
-      } catch (error) {
-        alert(`${file.name}: ${error.message || "Could not import that backup."}`);
-      }
-      continue;
-    }
-
-    chapters.push({
-      title: file.name.replace(/\.(txt|md|html?|markdown)$/i, ""),
-      type: file.type || "text/plain",
-      text: await file.text(),
-      progress: 0
-    });
-  }
-
-  if (importedBackups.length) {
-    books.unshift(...importedBackups);
-  }
-
-  if (chapters.length === 1) {
-    books.unshift({
-      id: crypto.randomUUID(),
-      title: chapters[0].title,
-      chapters,
-      activeChapter: 0,
-      progress: 0,
-      addedAt: Date.now()
-    });
-  } else if (chapters.length > 1) {
-    books.unshift({
-      id: crypto.randomUUID(),
-      title: `Imported chapters ${new Date().toLocaleDateString()}`,
-      chapters,
-      activeChapter: 0,
-      progress: 0,
-      addedAt: Date.now()
-    });
-  }
-
-  activeId = importedBackups[0]?.id || books[0]?.id || null;
-  persist();
-  renderLibrary();
-  openBook(activeId);
+fileInput?.addEventListener("change", async (event) => {
+  await importFiles([...event.target.files]);
   fileInput.value = "";
 });
 
-backupInput.addEventListener("change", async (event) => {
+backupInput?.addEventListener("change", async (event) => {
   const file = event.target.files[0];
-  if (!file) return;
-
-  try {
-    const backup = JSON.parse(await file.text());
-    const importedBook = normalizeBackup(backup);
-    books.unshift(importedBook);
-    activeId = importedBook.id;
-    persist();
-    renderLibrary();
-    openBook(activeId);
-  } catch (error) {
-    alert(error.message || "Could not import that backup.");
-  } finally {
-    backupInput.value = "";
-  }
+  if (file) await importBackupFile(file);
+  backupInput.value = "";
 });
 
-urlForm.addEventListener("submit", async (event) => {
+urlForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const url = urlInput.value.trim();
   if (!url) return;
@@ -125,86 +67,52 @@ urlForm.addEventListener("submit", async (event) => {
   setUrlStatus("Importing...", true);
   try {
     const book = await fetchBookFromUrl(url);
-    books.unshift(book);
-    activeId = book.id;
+    addBooks([book]);
     urlInput.value = "";
-    setUrlStatus("Imported. Save it before your flight and test airplane mode.", false);
-    persist();
-    renderLibrary();
-    openBook(activeId);
+    setUrlStatus("Imported. Test airplane mode before flying.", false);
   } catch (error) {
     setUrlStatus(error.message || "Could not import that URL.", false);
   }
 });
 
-pasteForm.addEventListener("submit", (event) => {
+pasteForm?.addEventListener("submit", (event) => {
   event.preventDefault();
-  const title = pasteTitle.value.trim();
   const text = pasteText.value.trim();
-
   if (!text) {
-    pasteStatus.textContent = "Paste some readable text first.";
+    pasteStatus.textContent = "Paste readable text first.";
     return;
   }
 
-  const chapters = splitChapters(text);
-  const bookTitle = title || chapters[0]?.title || `Pasted chapters ${new Date().toLocaleDateString()}`;
-  const book = {
-    id: crypto.randomUUID(),
-    title: bookTitle,
-    chapters: chapters.map((chapter, index) => ({
-      title: chapter.title || `${bookTitle} ${index + 1}`,
-      type: "text/plain",
-      text: chapter.text,
-      progress: 0
-    })),
-    activeChapter: 0,
-    progress: 0,
-    addedAt: Date.now()
-  };
+  const title = pasteTitle.value.trim() || "Pasted chapters";
+  const chapters = splitChapters(text).map((chapter, index) => ({
+    title: chapter.title || `${title} ${index + 1}`,
+    type: "text/plain",
+    text: chapter.text,
+    progress: 0
+  }));
 
-  books.unshift(book);
-  activeId = book.id;
-  pasteTitle.value = "";
-  pasteText.value = "";
-  pasteStatus.textContent = "Saved to your offline shelf.";
-  persist();
-  renderLibrary();
-  openBook(activeId);
+  addBooks([
+    {
+      id: crypto.randomUUID(),
+      title,
+      chapters,
+      activeChapter: 0,
+      bookmark: null,
+      addedAt: Date.now()
+    }
+  ]);
+  pasteForm.reset();
+  pasteStatus.textContent = "Saved to shelf.";
 });
 
-searchInput.addEventListener("input", renderLibrary);
-
-shelfButton.addEventListener("click", () => {
-  document.body.classList.toggle("show-library");
+demoButton?.addEventListener("click", () => {
+  addBooks([buildDemoBook()]);
 });
 
-chapterSelect.addEventListener("change", () => {
-  openChapter(Number(chapterSelect.value));
-});
+searchInput?.addEventListener("input", renderLibrary);
 
-prevChapter.addEventListener("click", () => {
-  const book = activeBook();
-  if (!book) return;
-  openChapter(Math.max(0, currentChapterIndex(book) - 1));
-});
-
-nextChapter.addEventListener("click", () => {
-  const book = activeBook();
-  if (!book) return;
-  openChapter(Math.min(getChapters(book).length - 1, currentChapterIndex(book) + 1));
-});
-
-bookmarkButton.addEventListener("click", () => {
-  saveBookmark();
-});
-
-jumpBookmarkButton.addEventListener("click", () => {
-  jumpToBookmark();
-});
-
-clearButton.addEventListener("click", () => {
-  if (!books.length || !confirm("Remove every imported book from this browser?")) return;
+clearButton?.addEventListener("click", () => {
+  if (!books.length || !confirm("Remove all books from this browser?")) return;
   books = [];
   activeId = null;
   persist();
@@ -212,58 +120,51 @@ clearButton.addEventListener("click", () => {
   openBook(null);
 });
 
-content.addEventListener("scroll", () => {
-  const book = books.find((item) => item.id === activeId);
+content?.addEventListener("scroll", () => {
+  const book = activeBook();
   if (!book) return;
   const chapter = currentChapter(book);
-  const scrollable = content.scrollHeight - content.clientHeight;
-  const progress = scrollable > 0 ? content.scrollTop / scrollable : 0;
-  chapter.progress = progress;
+  chapter.progress = scrollProgress(content);
   book.progress = totalProgress(book);
   updateReadingMeta(book);
   persist();
   renderLibrary(false);
 });
 
-themeButton.addEventListener("click", () => {
+chapterSelect?.addEventListener("change", () => openChapter(Number(chapterSelect.value)));
+prevChapter?.addEventListener("click", () => openChapter(currentChapterIndex(activeBook()) - 1));
+nextChapter?.addEventListener("click", () => openChapter(currentChapterIndex(activeBook()) + 1));
+shelfButton?.addEventListener("click", () => document.body.classList.toggle("show-library"));
+bookmarkButton?.addEventListener("click", saveBookmark);
+jumpBookmarkButton?.addEventListener("click", jumpToBookmark);
+exportButton?.addEventListener("click", exportActiveBook);
+exportSidebarButton?.addEventListener("click", exportActiveBook);
+
+decreaseFont?.addEventListener("click", () => {
+  settings.fontSize = Math.max(17, settings.fontSize - 1);
+  applySettings();
+  persist(false);
+});
+
+increaseFont?.addEventListener("click", () => {
+  settings.fontSize = Math.min(30, settings.fontSize + 1);
+  applySettings();
+  persist(false);
+});
+
+themeButton?.addEventListener("click", () => {
   settings.dark = !settings.dark;
   applySettings();
   persist(false);
 });
 
-decreaseFont.addEventListener("click", () => {
-  settings.fontSize = Math.max(16, settings.fontSize - 1);
-  applySettings();
-  persist(false);
-});
-
-increaseFont.addEventListener("click", () => {
-  settings.fontSize = Math.min(28, settings.fontSize + 1);
-  applySettings();
-  persist(false);
-});
-
-exportButton.addEventListener("click", () => {
-  exportActiveBook();
-});
-
-exportSidebarButton.addEventListener("click", () => {
-  exportActiveBook();
-});
-
-function exportActiveBook() {
-  const book = activeBook();
-  if (!book) return;
-  exportBookBackup(book);
-}
-
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   deferredInstall = event;
-  installButton.classList.remove("hidden");
+  installButton?.classList.remove("hidden");
 });
 
-installButton.addEventListener("click", async () => {
+installButton?.addEventListener("click", async () => {
   if (!deferredInstall) return;
   deferredInstall.prompt();
   await deferredInstall.userChoice;
@@ -271,18 +172,64 @@ installButton.addEventListener("click", async () => {
   installButton.classList.add("hidden");
 });
 
-if ("serviceWorker" in navigator) {
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("./sw.js").catch(() => {});
 }
 
+async function importFiles(files) {
+  const backupBooks = [];
+  const chapters = [];
+
+  for (const file of files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))) {
+    const text = await file.text();
+    const backupBook = backupBookFromRawText(text);
+    if (isBackupFile(file) && backupBook) {
+      backupBooks.push(backupBook);
+      continue;
+    }
+
+    chapters.push({
+      title: file.name.replace(/\.(txt|md|html?|markdown|json)$/i, ""),
+      type: file.type || "text/plain",
+      text,
+      progress: 0
+    });
+  }
+
+  const imported = [...backupBooks];
+  if (chapters.length === 1) {
+    imported.push(newBook(chapters[0].title, chapters));
+  } else if (chapters.length > 1) {
+    imported.push(newBook(`Imported chapters ${new Date().toLocaleDateString()}`, chapters));
+  }
+
+  if (imported.length) addBooks(imported);
+}
+
+async function importBackupFile(file) {
+  const book = backupBookFromRawText(await file.text());
+  if (!book) {
+    alert("This is not a readable Flight Reader backup.");
+    return;
+  }
+  addBooks([book]);
+}
+
+function addBooks(newBooks) {
+  books.unshift(...newBooks.map(normalizeBook));
+  activeId = books[0]?.id || null;
+  persist();
+  renderLibrary();
+  openBook(activeId);
+}
+
 function renderLibrary(allowEmpty = true) {
-  const query = searchInput.value.trim().toLowerCase();
+  if (!bookList) return;
+  const query = (searchInput?.value || "").trim().toLowerCase();
   const filtered = books.filter((book) => book.title.toLowerCase().includes(query));
 
   if (!filtered.length) {
-    if (allowEmpty) {
-      bookList.innerHTML = `<p class="empty">${books.length ? "No matching books." : "Your offline shelf is empty."}</p>`;
-    }
+    bookList.innerHTML = allowEmpty ? `<p class="empty">${books.length ? "No matching books." : "Your shelf is empty."}</p>` : "";
     return;
   }
 
@@ -290,11 +237,12 @@ function renderLibrary(allowEmpty = true) {
     .map((book) => {
       const chapters = getChapters(book);
       const percent = Math.round(totalProgress(book) * 100);
+      const active = book.id === activeId ? " active" : "";
       const mark = book.bookmark ? " - bookmarked" : "";
       return `
-        <button class="book ${book.id === activeId ? "active" : ""}" type="button" data-id="${book.id}">
-          <span class="book-title">${escapeHtml(book.title)}</span>
-          <span class="book-progress">${chapters.length} chapter${chapters.length === 1 ? "" : "s"} - ${percent}% read${mark}</span>
+        <button class="book${active}" type="button" data-id="${escapeHtml(book.id)}">
+          <strong>${escapeHtml(book.title)}</strong>
+          <small>${chapters.length} chapter${chapters.length === 1 ? "" : "s"} - ${percent}% read${mark}</small>
         </button>
       `;
     })
@@ -315,49 +263,52 @@ function openBook(id) {
 
   if (!book) {
     document.body.classList.remove("reading-active", "show-library");
-    bookTitle.textContent = "Import a legal novel file";
-    metaLine.textContent = "Ready for takeoff";
-    chapterControls.classList.add("hidden");
-    bookmarkButton.disabled = true;
-    jumpBookmarkButton.disabled = true;
-    exportButton.disabled = true;
-    exportSidebarButton.disabled = true;
-    content.innerHTML = `
-      <p>Import legally obtained novel files before boarding, then read without an internet connection.</p>
-      <p>Good sources include ebook store exports, your own writing, public domain books, or files the author allows you to download.</p>
-    `;
-    progressBar.style.width = "0%";
-    progressText.textContent = "0% read";
-    bookmarkText.textContent = "No bookmark";
+    setText(bookTitle, "Import a novel file");
+    setText(metaLine, "Your offline shelf is ready");
+    chapterControls?.classList.add("hidden");
+    setButtonsDisabled(true);
+    if (content) {
+      content.innerHTML = `
+        <p>Bring your own legally saved novel files, import them before boarding, and read with no internet.</p>
+        <p>Your books stay in this browser. Flight Reader remembers your chapter, progress, bookmark, theme, and font size on this device.</p>
+      `;
+    }
+    updateEmptyMeta();
     persist(false);
     return;
   }
 
   document.body.classList.add("reading-active");
   document.body.classList.remove("show-library");
-  renderChapterControls(book);
   const chapter = currentChapter(book);
-  bookTitle.textContent = book.title;
-  metaLine.textContent = chapter ? `${chapter.title} - Offline mode` : "Offline mode";
-  bookmarkButton.disabled = false;
-  jumpBookmarkButton.disabled = !book.bookmark;
-  exportButton.disabled = false;
-  exportSidebarButton.disabled = false;
-  content.innerHTML = renderChapter(chapter || book);
+  setText(bookTitle, book.title);
+  setText(metaLine, chapter ? `${chapter.title} - Offline mode` : "Offline mode");
+  setButtonsDisabled(false);
+  renderChapterControls(book);
+  if (content) content.innerHTML = renderChapter(chapter);
+
   requestAnimationFrame(() => {
-    const scrollable = content.scrollHeight - content.clientHeight;
-    content.scrollTop = Math.round(scrollable * ((chapter?.progress || 0)));
+    if (content && chapter) {
+      content.scrollTop = Math.round((content.scrollHeight - content.clientHeight) * (chapter.progress || 0));
+    }
     updateReadingMeta(book);
   });
+
   persist(false);
   renderLibrary(false);
 }
 
-function focusReaderOnSmallScreen() {
-  if (window.matchMedia("(max-width: 560px)").matches) {
-    document.body.classList.remove("show-library");
-    reader.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+function renderChapterControls(book) {
+  const chapters = getChapters(book);
+  if (!chapterControls || !chapterSelect) return;
+  chapterControls.classList.toggle("hidden", chapters.length <= 1);
+  chapterSelect.innerHTML = chapters
+    .map((chapter, index) => `<option value="${index}">${index + 1}. ${escapeHtml(chapter.title)}</option>`)
+    .join("");
+  const index = currentChapterIndex(book);
+  chapterSelect.value = String(index);
+  if (prevChapter) prevChapter.disabled = index <= 0;
+  if (nextChapter) nextChapter.disabled = index >= chapters.length - 1;
 }
 
 function openChapter(index) {
@@ -365,7 +316,6 @@ function openChapter(index) {
   if (!book) return;
   const chapters = getChapters(book);
   book.activeChapter = Math.max(0, Math.min(index, chapters.length - 1));
-  currentChapter(book).progress = currentChapter(book).progress || 0;
   openBook(book.id);
 }
 
@@ -374,14 +324,12 @@ function saveBookmark() {
   if (!book) return;
   const index = currentChapterIndex(book);
   const chapter = currentChapter(book);
-
   book.bookmark = {
     chapter: index,
-    progress: chapter?.progress || 0,
+    progress: chapter?.progress || scrollProgress(content),
     label: chapter?.title || `Chapter ${index + 1}`,
     savedAt: new Date().toISOString()
   };
-
   persist();
   updateReadingMeta(book);
   renderLibrary(false);
@@ -400,164 +348,134 @@ function jumpToBookmark() {
 function updateReadingMeta(book) {
   const total = Math.round(totalProgress(book) * 100);
   const index = currentChapterIndex(book);
-  const chapter = currentChapter(book);
-  const chapterProgress = Math.round((chapter?.progress || 0) * 100);
-  progressBar.style.width = `${total}%`;
-  progressText.textContent = `${total}% read - chapter ${index + 1}, ${chapterProgress}%`;
+  const chapterProgress = Math.round((currentChapter(book)?.progress || 0) * 100);
+  if (progressBar) progressBar.style.width = `${total}%`;
+  setText(progressText, `${total}% read - chapter ${index + 1}, ${chapterProgress}%`);
 
   if (book.bookmark) {
-    const markChapter = Math.max(0, (book.bookmark.chapter || 0) + 1);
+    const markChapter = (book.bookmark.chapter || 0) + 1;
     const markProgress = Math.round((book.bookmark.progress || 0) * 100);
-    bookmarkText.textContent = `Bookmark: chapter ${markChapter}, ${markProgress}%`;
-    jumpBookmarkButton.disabled = false;
+    setText(bookmarkText, `Bookmark: chapter ${markChapter}, ${markProgress}%`);
+    if (jumpBookmarkButton) jumpBookmarkButton.disabled = false;
   } else {
-    bookmarkText.textContent = "No bookmark";
-    jumpBookmarkButton.disabled = true;
+    setText(bookmarkText, "No bookmark");
+    if (jumpBookmarkButton) jumpBookmarkButton.disabled = true;
   }
 }
 
-function renderChapterControls(book) {
-  const chapters = getChapters(book);
-  chapterControls.classList.toggle("hidden", chapters.length <= 1);
-  chapterSelect.innerHTML = chapters
-    .map((chapter, index) => `<option value="${index}">${index + 1}. ${escapeHtml(chapter.title)}</option>`)
-    .join("");
-  const index = currentChapterIndex(book);
-  chapterSelect.value = String(index);
-  prevChapter.disabled = index <= 0;
-  nextChapter.disabled = index >= chapters.length - 1;
+function updateEmptyMeta() {
+  if (progressBar) progressBar.style.width = "0%";
+  setText(progressText, "0% read");
+  setText(bookmarkText, "No bookmark");
 }
 
-function activeBook() {
-  return books.find((item) => item.id === activeId);
-}
-
-function currentChapter(book) {
-  return getChapters(book)[currentChapterIndex(book)];
-}
-
-function currentChapterIndex(book) {
-  const chapters = getChapters(book);
-  return Math.max(0, Math.min(book.activeChapter || 0, chapters.length - 1));
-}
-
-function getChapters(book) {
-  if (Array.isArray(book.chapters) && book.chapters.length) return book.chapters;
-  return [
-    {
-      title: book.title,
-      type: book.type || "text/plain",
-      text: book.text || "",
-      progress: book.progress || 0
-    }
-  ];
-}
-
-function totalProgress(book) {
-  const chapters = getChapters(book);
-  if (!chapters.length) return 0;
-  const index = currentChapterIndex(book);
-  return Math.min(1, (index + (chapters[index]?.progress || 0)) / chapters.length);
-}
-
-function renderChapter(chapter) {
-  if (looksLikeFlightReaderBackup(chapter.text || "")) {
-    return `
-      <p>This file is a Flight Reader backup, not a normal text chapter.</p>
-      <p>Use Import backup or Import files again with the latest app version to restore it into the shelf.</p>
-    `;
+function renderChapter(chapter = {}) {
+  const text = chapter.text || "";
+  if (looksLikeFlightReaderBackup(text)) {
+    return `<p>This file is a Flight Reader backup. Use Import backup or Import files to restore it into the shelf.</p>`;
   }
 
-  if (/html/i.test(chapter.type) || /<\/?[a-z][\s\S]*>/i.test((chapter.text || "").slice(0, 500))) {
-    return sanitizeHtml(chapter.text || "");
+  if (/html/i.test(chapter.type || "") || /<\/?[a-z][\s\S]*>/i.test(text.slice(0, 500))) {
+    return sanitizeHtml(text);
   }
 
-  const blocks = (chapter.text || "")
+  return text
     .replace(/\r\n/g, "\n")
     .split(/\n{2,}/)
     .map((block) => block.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((block) => `<p>${escapeHtml(block).replace(/\n/g, "<br>")}</p>`)
+    .join("");
+}
 
-  return blocks.map((block) => `<p>${escapeHtml(block).replace(/\n/g, "<br>")}</p>`).join("");
+async function fetchBookFromUrl(value) {
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error("Enter a full URL.");
+  }
+  if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("Only http:// or https:// links are supported.");
+
+  const response = await fetch(parsed.href, { mode: "cors" });
+  if (!response.ok) throw new Error(`The website returned ${response.status}.`);
+  const type = response.headers.get("content-type") || "text/plain";
+  const text = await response.text();
+  return newBook(titleFromUrl(parsed, text), [{ title: titleFromUrl(parsed, text), type, text, progress: 0 }]);
 }
 
 function splitChapters(text) {
-  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const marker = /^(chapter|ep\.?|episode|\u0e15\u0e2d\u0e19\u0e17\u0e35\u0e48|\u0e1a\u0e17\u0e17\u0e35\u0e48)\s*[\w\d\u0e50-\u0e59]+.*$/i;
   const chapters = [];
   let current = null;
-  const marker = /^(chapter|ep\.?|episode|\u0e15\u0e2d\u0e19\u0e17\u0e35\u0e48|\u0e1a\u0e17\u0e17\u0e35\u0e48)\s*[\w\d\u0e50-\u0e59]+.*$/i;
 
-  for (const line of lines) {
+  text.replace(/\r\n/g, "\n").split("\n").forEach((line) => {
     if (marker.test(line.trim())) {
       if (current?.text.trim()) chapters.push({ title: current.title, text: current.text.trim() });
       current = { title: line.trim(), text: "" };
-      continue;
+      return;
     }
     if (!current) current = { title: "", text: "" };
     current.text += `${line}\n`;
-  }
+  });
 
   if (current?.text.trim()) chapters.push({ title: current.title, text: current.text.trim() });
   return chapters.length ? chapters : [{ title: "", text }];
 }
 
-async function fetchBookFromUrl(url) {
-  let parsed;
-  try {
-    parsed = new URL(url);
-  } catch {
-    throw new Error("Enter a full URL starting with http:// or https://.");
-  }
+function exportActiveBook() {
+  const book = activeBook();
+  if (!book) return;
+  const backup = { app: "flight-reader", version: 2, exportedAt: new Date().toISOString(), book: normalizeBook(book) };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${safeFileName(book.title)}.flight-reader.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
 
-  if (!["http:", "https:"].includes(parsed.protocol)) {
-    throw new Error("Only http:// and https:// links are supported.");
-  }
-
-  const response = await fetch(parsed.href, { mode: "cors" });
-  if (!response.ok) {
-    throw new Error(`The website returned ${response.status}. Download the file manually if you have access.`);
-  }
-
-  const contentType = response.headers.get("content-type") || "text/plain";
-  if (!/text|html|markdown|xml|json/i.test(contentType)) {
-    throw new Error("That URL does not look like a readable text or HTML file.");
-  }
-
-  const text = await response.text();
-  if (!text.trim()) {
-    throw new Error("That page was empty.");
-  }
-
-  return {
-    id: crypto.randomUUID(),
-    title: titleFromUrl(parsed, text),
-    chapters: [
-      {
-        title: titleFromUrl(parsed, text),
-        type: contentType,
-        text,
-        progress: 0
-      }
+function buildDemoBook() {
+  const title = "Demo: Bangkok Night Flight";
+  const chapterTexts = [
+    [
+      "บทที่ 1 - ก่อนเครื่องขึ้น",
+      "สนามบินตอนดึกมีเสียงประกาศเป็นจังหวะเหมือนนาฬิกาใหญ่กำลังนับถอยหลัง ผู้โดยสารลากกระเป๋าผ่านไฟสีขาวเย็น ๆ และทุกคนดูเหมือนกำลังเก็บโลกทั้งใบไว้ในหน้าจอมือถือของตัวเอง",
+      "ธีร์เปิด Flight Reader แล้วเช็กเล่มที่เตรียมไว้ เขากด Bookmark ไว้ตรงกลางบท เผื่อหลังอาหารบนเครื่องจะกลับมาอ่านต่อได้ทันทีโดยไม่ต้องไล่หาหน้าเดิม",
+      "สัญญาณอินเทอร์เน็ตไม่สำคัญอีกต่อไป เพราะเรื่องทั้งหมดอยู่ในเครื่องเรียบร้อยแล้ว"
     ],
-    activeChapter: 0,
-    sourceUrl: parsed.href,
-    progress: 0,
-    addedAt: Date.now()
-  };
-}
+    [
+      "บทที่ 2 - โหมดเครื่องบิน",
+      "หลังเครื่องไต่ระดับ ไฟเข็มขัดยังสว่างอยู่ เมืองข้างล่างกลายเป็นเส้นสีทองบาง ๆ เหมือนลายมันบนเนื้อวากิวที่ถูกแล่อย่างตั้งใจ",
+      "ธีร์แตะ Night mode หน้าจอเปลี่ยนเป็นสีเข้มสบายตา ตัวอักษรใหญ่พอดีกับมือเดียว เขาเลื่อนอ่านช้า ๆ และรู้สึกว่าการเตรียมของก่อนบินช่วยลดความวุ่นวายในหัวได้มากกว่าที่คิด",
+      "บางครั้งความสะดวกไม่ได้มาจากแอพที่ฉลาดที่สุด แต่มาจากของที่พร้อมใช้ตอนที่ไม่มีอะไรพร้อมเลย"
+    ],
+    [
+      "บทที่ 3 - ที่คั่นหน้า",
+      "เสียงรถเข็นอาหารใกล้เข้ามา ธีร์กด Mark ก่อนวางมือถือ เขารู้ว่าอีกไม่กี่นาทีจังหวะอ่านจะถูกตัดด้วยถาดอาหาร น้ำเปล่า และคำถามว่าเอาชาหรือกาแฟ",
+      "เมื่อทุกอย่างเงียบลงอีกครั้ง เขากด Go mark แล้วกลับมายังย่อหน้าเดิมทันที ไม่มีการเดา ไม่มีการเลื่อนหา ไม่มีอารมณ์สะดุด",
+      "ที่คั่นหน้าเล็ก ๆ ทำให้การอ่านยาวสิบห้าชั่วโมงดูเป็นไปได้ขึ้นเยอะ"
+    ],
+    [
+      "บทที่ 4 - สำรองไว้บนมือถือ",
+      "ก่อนบินครั้งหน้า ธีร์ export book เป็นไฟล์ backup แล้วส่งเข้า LINE ให้ตัวเอง พอเปิดบนมือถืออีกเครื่อง เขาแค่กด Restore book backup แล้วทั้งเล่มก็กลับมาอยู่ใน shelf",
+      "หนังสือไม่ได้ลอยอยู่บน cloud แปลก ๆ มันอยู่ใน browser storage ของเครื่องที่เขาเลือกเอง และถ้าจะย้ายก็ย้ายด้วยไฟล์ backup ที่เขาถือไว้",
+      "เครื่องบินยังบินต่อไปในความมืด แต่หน้าอ่านยังนิ่ง สะอาด และพร้อมสำหรับบทถัดไป"
+    ]
+  ];
 
-function titleFromUrl(url, text) {
-  const htmlTitle = text.match(/<title[^>]*>(.*?)<\/title>/is)?.[1]?.replace(/\s+/g, " ").trim();
-  if (htmlTitle) return decodeEntities(htmlTitle);
-
-  const pathName = decodeURIComponent(url.pathname.split("/").filter(Boolean).pop() || url.hostname);
-  return pathName.replace(/\.(txt|md|html?|markdown)$/i, "") || url.hostname;
-}
-
-function decodeEntities(value) {
-  const textarea = document.createElement("textarea");
-  textarea.innerHTML = value;
-  return textarea.value;
+  return newBook(
+    title,
+    chapterTexts.map((parts) => ({
+      title: parts[0],
+      type: "text/plain",
+      text: parts.join("\n\n"),
+      progress: 0
+    }))
+  );
 }
 
 function sanitizeHtml(html) {
@@ -566,119 +484,61 @@ function sanitizeHtml(html) {
   template.content
     .querySelectorAll("script, iframe, object, embed, link, style, noscript, form, input, button")
     .forEach((node) => node.remove());
-
   removeReaderClutter(template);
-
   template.content.querySelectorAll("*").forEach((node) => {
     [...node.attributes].forEach((attr) => {
       if (/^on/i.test(attr.name) || ["srcdoc", "style"].includes(attr.name)) node.removeAttribute(attr.name);
     });
   });
-
   return template.innerHTML;
 }
 
 function removeReaderClutter(template) {
-  const clutterWords = [
-    "ad",
-    "ads",
-    "advert",
-    "advertise",
-    "advertisement",
-    "banner",
-    "sponsor",
-    "sponsored",
-    "promo",
-    "promotion",
-    "popup",
-    "modal",
-    "overlay",
-    "cookie",
-    "tracking",
-    "analytics",
-    "share",
-    "social",
-    "sidebar",
-    "related",
-    "recommend",
-    "comment",
-    "footer",
-    "navbar",
-    "breadcrumb"
-  ];
-  const clutterPattern = new RegExp(`(^|[-_\\s])(${clutterWords.join("|")})([-_\\s]|$)`, "i");
-
+  const words = ["ad", "ads", "advert", "advertisement", "banner", "sponsor", "sponsored", "promo", "popup", "modal", "overlay", "cookie", "tracking", "share", "social", "sidebar", "related", "recommend", "comment", "footer", "navbar"];
+  const pattern = new RegExp(`(^|[-_\\s])(${words.join("|")})([-_\\s]|$)`, "i");
   template.content.querySelectorAll("*").forEach((node) => {
-    const hints = [
-      node.id,
-      node.className,
-      node.getAttribute("role"),
-      node.getAttribute("aria-label"),
-      node.getAttribute("data-ad"),
-      node.getAttribute("data-ads"),
-      node.getAttribute("data-testid")
-    ]
+    const hints = [node.id, node.className, node.getAttribute("role"), node.getAttribute("aria-label"), node.getAttribute("data-testid")]
       .filter(Boolean)
       .join(" ");
-
-    if (clutterPattern.test(hints)) node.remove();
+    if (pattern.test(hints)) node.remove();
   });
 }
 
-function exportBookBackup(book) {
-  const backup = {
-    app: "flight-reader",
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    book: normalizeBook(book)
-  };
-  const blob = new Blob([JSON.stringify(backup, null, 2)], {
-    type: "application/json;charset=utf-8"
-  });
-  const blobUrl = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = blobUrl;
-  link.download = `${safeFileName(book.title || "flight-reader-book")}.flight-reader.json`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(blobUrl);
+function newBook(title, chapters) {
+  return { id: crypto.randomUUID(), title, chapters, activeChapter: 0, progress: 0, bookmark: null, addedAt: Date.now() };
 }
 
-function normalizeBackup(backup) {
-  if (!backup || backup.app !== "flight-reader" || !backup.book) {
-    throw new Error("This is not a Flight Reader backup.");
-  }
+function normalizeBook(book = {}) {
+  const rawBackup = backupBookFromRawText(book.text, book) || backupBookFromRawText(book.chapters?.[0]?.text, book);
+  if (rawBackup) return rawBackup;
 
-  const book = normalizeBook(backup.book);
-  if (!book.title || !book.chapters.length) {
-    throw new Error("Backup does not contain a readable book.");
-  }
+  const chapters = Array.isArray(book.chapters) && book.chapters.length
+    ? book.chapters
+    : [{ title: book.title || "Chapter 1", type: book.type || "text/plain", text: book.text || "", progress: book.progress || 0 }];
 
   return {
-    ...book,
-    id: crypto.randomUUID(),
-    addedAt: Date.now()
+    id: book.id || crypto.randomUUID(),
+    title: book.title || "Untitled",
+    chapters: chapters.map((chapter, index) => ({
+      title: chapter.title || `Chapter ${index + 1}`,
+      type: chapter.type || "text/plain",
+      text: chapter.text || "",
+      progress: clamp01(chapter.progress || 0)
+    })),
+    activeChapter: Math.max(0, book.activeChapter || 0),
+    progress: clamp01(book.progress || 0),
+    bookmark: book.bookmark || null,
+    addedAt: book.addedAt || Date.now()
   };
-}
-
-function isBackupFile(file) {
-  return /\.json$/i.test(file.name) || /json/i.test(file.type || "");
 }
 
 function backupBookFromRawText(text, fallback = {}) {
   if (!looksLikeFlightReaderBackup(text || "")) return null;
-
   try {
     const parsed = JSON.parse(text);
+    if (parsed.app !== "flight-reader" || !parsed.book) return null;
     const book = normalizeBook(parsed.book);
-    if (!book.title || !book.chapters.length) return null;
-
-    return {
-      ...book,
-      id: fallback.id || book.id || crypto.randomUUID(),
-      addedAt: fallback.addedAt || book.addedAt || Date.now()
-    };
+    return { ...book, id: fallback.id || crypto.randomUUID(), addedAt: fallback.addedAt || Date.now() };
   } catch {
     return null;
   }
@@ -686,15 +546,61 @@ function backupBookFromRawText(text, fallback = {}) {
 
 function looksLikeFlightReaderBackup(text) {
   const value = (text || "").trim();
-  return value.startsWith("{") && value.includes('"app"') && value.includes('"flight-reader"') && value.includes('"book"');
+  return value.startsWith("{") && value.includes('"flight-reader"') && value.includes('"book"');
 }
 
-function safeFileName(value) {
-  return value
-    .trim()
-    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "-")
-    .replace(/\s+/g, " ")
-    .slice(0, 80) || "flight-reader-book";
+function isBackupFile(file) {
+  return /\.json$/i.test(file.name) || /json/i.test(file.type || "");
+}
+
+function getChapters(book) {
+  return Array.isArray(book?.chapters) ? book.chapters : [];
+}
+
+function activeBook() {
+  return books.find((book) => book.id === activeId);
+}
+
+function currentChapter(book) {
+  return getChapters(book)[currentChapterIndex(book)];
+}
+
+function currentChapterIndex(book) {
+  const chapters = getChapters(book);
+  if (!chapters.length) return 0;
+  return Math.max(0, Math.min(book?.activeChapter || 0, chapters.length - 1));
+}
+
+function totalProgress(book) {
+  const chapters = getChapters(book);
+  if (!chapters.length) return 0;
+  const index = currentChapterIndex(book);
+  return clamp01((index + (chapters[index]?.progress || 0)) / chapters.length);
+}
+
+function scrollProgress(element) {
+  if (!element) return 0;
+  const scrollable = element.scrollHeight - element.clientHeight;
+  return scrollable > 0 ? clamp01(element.scrollTop / scrollable) : 0;
+}
+
+function setButtonsDisabled(disabled) {
+  [bookmarkButton, jumpBookmarkButton, exportButton, exportSidebarButton].forEach((button) => {
+    if (button) button.disabled = disabled;
+  });
+}
+
+function focusReaderOnSmallScreen() {
+  if (window.matchMedia("(max-width: 900px)").matches) {
+    document.body.classList.remove("show-library");
+    reader?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function applySettings() {
+  document.body.classList.toggle("dark", settings.dark);
+  document.documentElement.style.setProperty("--reader-size", `${settings.fontSize}px`);
+  setText(themeButton, settings.dark ? "Day" : "Night");
 }
 
 function loadBooks() {
@@ -705,52 +611,12 @@ function loadBooks() {
   }
 }
 
-function normalizeBook(book = {}) {
-  const rawBackupBook = backupBookFromRawText(book.text, book);
-  if (rawBackupBook) return rawBackupBook;
-
-  if (Array.isArray(book.chapters) && book.chapters.length) {
-    const rawChapterBackupBook = backupBookFromRawText(book.chapters[0]?.text, book);
-    if (rawChapterBackupBook) return rawChapterBackupBook;
-
-    return {
-      ...book,
-      activeChapter: book.activeChapter || 0,
-      progress: book.progress || 0,
-      bookmark: book.bookmark || null
-    };
-  }
-
-  return {
-    id: book.id || crypto.randomUUID(),
-    title: book.title || "Untitled",
-    chapters: [
-      {
-        title: book.title || "Chapter 1",
-        type: book.type || "text/plain",
-        text: book.text || "",
-        progress: book.progress || 0
-      }
-    ],
-    activeChapter: 0,
-    progress: book.progress || 0,
-    bookmark: book.bookmark || null,
-    addedAt: book.addedAt || Date.now()
-  };
-}
-
 function loadSettings() {
   try {
-    return { fontSize: 19, dark: false, ...JSON.parse(localStorage.getItem(settingsKey)) };
+    return { fontSize: 21, dark: false, ...JSON.parse(localStorage.getItem(settingsKey)) };
   } catch {
-    return { fontSize: 19, dark: false };
+    return { fontSize: 21, dark: false };
   }
-}
-
-function applySettings() {
-  document.body.classList.toggle("dark", settings.dark);
-  document.documentElement.style.setProperty("--reader-size", `${settings.fontSize}px`);
-  themeButton.textContent = settings.dark ? "Day" : "Night";
 }
 
 function persist(includeBooks = true) {
@@ -758,20 +624,46 @@ function persist(includeBooks = true) {
   localStorage.setItem(settingsKey, JSON.stringify(settings));
 }
 
-function setUrlStatus(message, isLoading) {
-  urlStatus.textContent = message;
-  urlButton.disabled = isLoading;
-  urlForm.classList.toggle("loading", isLoading);
+function setUrlStatus(message, loading) {
+  setText(urlStatus, message);
+  if (urlButton) urlButton.disabled = loading;
+  urlForm?.classList.toggle("loading", loading);
+}
+
+function titleFromUrl(url, text) {
+  const title = text.match(/<title[^>]*>(.*?)<\/title>/is)?.[1]?.replace(/\s+/g, " ").trim();
+  if (title) return decodeEntities(title);
+  return decodeURIComponent(url.pathname.split("/").filter(Boolean).pop() || url.hostname).replace(/\.(txt|md|html?)$/i, "");
+}
+
+function decodeEntities(value) {
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = value;
+  return textarea.value;
+}
+
+function safeFileName(value) {
+  return (value || "flight-reader-book")
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "-")
+    .replace(/\s+/g, " ")
+    .slice(0, 80) || "flight-reader-book";
+}
+
+function clamp01(value) {
+  return Math.max(0, Math.min(1, Number(value) || 0));
+}
+
+function setText(element, value) {
+  if (element) element.textContent = value;
 }
 
 function escapeHtml(value) {
-  return value.replace(/[&<>"']/g, (char) => {
-    return {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    }[char];
-  });
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[char]);
 }

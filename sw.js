@@ -1,4 +1,4 @@
-const cacheName = "flight-reader-shell-v1";
+const cacheName = "flight-reader-shell-v3";
 const shellFiles = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (event) => {

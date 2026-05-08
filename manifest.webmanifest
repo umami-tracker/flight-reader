@@ -3,7 +3,7 @@
   "short_name": "Flight Reader",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f6f4ef",
+  "background_color": "#f4f1ea",
   "theme_color": "#111827",
   "icons": [
     {
