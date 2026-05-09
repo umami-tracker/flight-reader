@@ -20,6 +20,8 @@
   --reader-width: 740px;
   --radius: 8px;
   --reader-size: 21px;
+  --reader-line-height: 1.9;
+  --reader-padding: 22px;
 }
 
 body.dark {
@@ -419,7 +421,7 @@ canvas {
   height: calc(100dvh - clamp(1.5rem, 3.6vw, 2.7rem));
   overflow: hidden;
   display: grid;
-  grid-template-rows: auto auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto;
   border: 1px solid var(--line);
   border-radius: calc(var(--radius) + 4px);
   background:
@@ -484,7 +486,8 @@ canvas {
 }
 
 .reader-meta,
-.chapter-controls {
+.chapter-controls,
+.settings-panel {
   padding: 0.58rem clamp(0.82rem, 1.8vw, 1.05rem);
   border-bottom: 1px solid var(--line);
   background: var(--paper-soft);
@@ -506,6 +509,51 @@ canvas {
   flex: 1 1 14rem;
 }
 
+.settings-panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.62rem;
+}
+
+.settings-panel > div {
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.settings-panel span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.stepper {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.stepper button {
+  min-width: 44px;
+  padding-inline: 0;
+  box-shadow: none;
+}
+
+.stepper output {
+  min-height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-strong);
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
 .chapter-controls.hidden,
 .hidden {
   display: none;
@@ -520,13 +568,17 @@ canvas {
   color: var(--ink);
   font-family: ui-serif, Georgia, "Noto Serif Thai", "Th Sarabun New", "Times New Roman", serif;
   font-size: var(--reader-size);
-  line-height: 1.9;
+  line-height: var(--reader-line-height);
   letter-spacing: 0;
   white-space: pre-wrap;
   word-break: normal;
   overflow-wrap: break-word;
   hyphens: auto;
   scrollbar-width: thin;
+}
+
+.mobile-bottom-bar {
+  display: none;
 }
 
 .content > * {
@@ -606,9 +658,44 @@ canvas {
   }
 
   .content {
-    padding: 1.25rem clamp(1rem, 4.5vw, 1.45rem) max(2.6rem, env(safe-area-inset-bottom));
+    padding:
+      1.25rem
+      clamp(var(--reader-padding), 5vw, calc(var(--reader-padding) + 8px))
+      max(5.8rem, calc(env(safe-area-inset-bottom) + 5.2rem));
     font-size: max(var(--reader-size), 20px);
-    line-height: 1.86;
+    line-height: var(--reader-line-height);
+  }
+
+  .settings-panel {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0.72rem 0.9rem;
+  }
+
+  .mobile-bottom-bar {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.42rem;
+    padding: 0.55rem 0.7rem max(0.65rem, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--paper) 92%, var(--surface-strong));
+    box-shadow: 0 -12px 34px rgba(31, 35, 38, 0.12);
+  }
+
+  .mobile-bottom-bar button {
+    min-width: 0;
+    min-height: 48px;
+    padding: 0.5rem 0.3rem;
+    font-size: clamp(0.78rem, 3.5vw, 0.94rem);
+    box-shadow: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #mobileBookmark:not(:disabled) {
+    background: var(--mark);
+    border-color: var(--mark);
+    color: #ffffff;
   }
 
   .mobile-only {
@@ -686,7 +773,9 @@ canvas {
     text-overflow: ellipsis;
   }
 
-  #exportButton {
+  #exportButton,
+  #bookmarkButton,
+  #jumpBookmarkButton {
     display: none;
   }
 

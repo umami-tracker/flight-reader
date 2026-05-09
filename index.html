@@ -74,6 +74,7 @@
             <button id="exportButton" type="button" title="Export current book backup" disabled>Save phone backup</button>
             <button id="decreaseFont" type="button" title="Smaller text">A-</button>
             <button id="increaseFont" type="button" title="Larger text">A+</button>
+            <button id="settingsButton" type="button" title="Reading settings">Settings</button>
             <button id="themeButton" type="button" title="Toggle theme">Night</button>
           </div>
         </div>
@@ -93,12 +94,46 @@
           <button id="nextChapter" type="button" title="Next chapter">Next</button>
         </div>
 
+        <section id="settingsPanel" class="settings-panel hidden" aria-label="Reading settings">
+          <div>
+            <span>Text</span>
+            <div class="stepper">
+              <button id="settingsFontDown" type="button">A-</button>
+              <output id="fontSizeValue">21px</output>
+              <button id="settingsFontUp" type="button">A+</button>
+            </div>
+          </div>
+          <div>
+            <span>Line</span>
+            <div class="stepper">
+              <button id="lineHeightDown" type="button">-</button>
+              <output id="lineHeightValue">1.90</output>
+              <button id="lineHeightUp" type="button">+</button>
+            </div>
+          </div>
+          <div>
+            <span>Margin</span>
+            <div class="stepper">
+              <button id="marginDown" type="button">-</button>
+              <output id="marginValue">Normal</output>
+              <button id="marginUp" type="button">+</button>
+            </div>
+          </div>
+        </section>
+
         <article id="content" class="content">
           <p>
             Bring your own legally saved novel files, import them before boarding, and read with no internet.
             Your books stay in this browser. Flight Reader remembers your chapter, progress, bookmark, theme, and font size on this device.
           </p>
         </article>
+
+        <nav class="mobile-bottom-bar" aria-label="Mobile reader controls">
+          <button id="mobilePrev" type="button" disabled>Prev</button>
+          <button id="mobileBookmark" type="button" disabled>Mark</button>
+          <button id="mobileSettings" type="button">Settings</button>
+          <button id="mobileNext" type="button" disabled>Next</button>
+        </nav>
       </main>
     </div>
 
